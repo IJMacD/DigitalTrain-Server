@@ -140,10 +140,10 @@ const httpServer = http.createServer(async (req, res) => {
                     const p = props[prop];
                     /** @type {string|boolean} */
                     let value = Array.isArray(p) ? p[0] : p;
-                    if (value === "1" || value === "on") {
+                    if (value === "on") {
                         value = true;
                     }
-                    else if (value === "0" || value === "off") {
+                    else if (value === "off") {
                         value = false;
                     }
                     
