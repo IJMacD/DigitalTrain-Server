@@ -10,7 +10,7 @@ const querystring = require('querystring');
 /**
  * How often to send speed update packets
  */
-const COM_INTERVAL = 250;
+const COM_INTERVAL = 1000;
 
 let DEBUG = 1;
 
@@ -35,7 +35,8 @@ let id = 0;
  */
 function logClient (client, message) {
     if (DEBUG >= 1) {
-        process.stdout.write(`\u001b[2K\u001b[1G${new Date().toISOString().substr(11,8)} (${client.id}) ${client.name || client.socket.remoteAddress} ${message}\n`);
+        const pre = process.stdout.isTTY ? `\u001b[2K\u001b[1G` : "";
+        process.stdout.write(`${pre}${new Date().toISOString().substr(11,8)} (${client.id}) ${client.name || client.socket.remoteAddress} ${message}\n`);
     }
 }
 
@@ -62,11 +63,24 @@ const server = net.createServer(socket => {
 
         const parts = t.split(",");
 
-        if (parts.length === 2 && parts[0] === "id") {
-            logClient(client, `identified as ${parts[1]}`)
-            client.name = parts[1];
-        } else {
-            console.log(t);
+        for (let i = 0; i + 1 < parts.length; i += 2) {
+            const field = parts[i];
+            /** @type {string|boolean} */
+            let value = parts[i + 1];
+
+            if (DEBUG >= 2) {
+                logClient(client, `${field} ${value}`);
+            }
+
+            if (value === "on") value = true;
+            if (value === "off") value = false;
+
+            if (field === "id") {
+                logClient(client, `identified as ${value}`)
+                client.name = value;
+            } else {
+                client[field] = value;
+            }
         }
     });
 
@@ -85,7 +99,6 @@ const server = net.createServer(socket => {
 });
 
 function setDeviceProp(client, prop, value) {
-    client[prop] = value;
     if (typeof value === "boolean") {
         client.socket.write(`${prop},${value ? "1" : "0"}\n`);
         logClient(client, `${ucfirst(prop)} ${value?"on":"off"}`);
@@ -112,14 +125,12 @@ function stopDevice (client) {
  */
 function comLoop () {
     for (const client of pool.values()) {
-        // if (client.speed != 0) {
-            client.socket.write(`speed,${client.speed}\n`);
-            if (DEBUG >= 2) {
-                process.stdout.write(`\u001b[2K\u001b[1G${new Date().toISOString()} ${client.name} ping\n`);
-            }
-        // }
+        client.socket.write(`?\n`);
+        if (DEBUG >= 2) {
+            process.stdout.write(`\u001b[2K\u001b[1G${new Date().toISOString()} ${client.name} ping\n`);
+        }
     }
-    if (DEBUG >= 1) {
+    if (DEBUG >= 1 && process.stdout.isTTY) {
         process.stdout.write(`\u001b[1G${new Date().toISOString().substr(11,8)} ${pool.size} client(s) (${[...pool.values()].map(c => c.name).join(", ")})`);
     }
 }
