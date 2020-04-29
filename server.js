@@ -4,6 +4,7 @@ const http = require('http');
 const http_port = 8080;
 const fs = require('fs');
 const querystring = require('querystring');
+const path = require('path');
 
 /** @typedef {import('net').Socket} Socket */
 
@@ -182,7 +183,11 @@ const httpServer = http.createServer(async (req, res) => {
         }
         res.write(JSON.stringify(Object.values(map)));
     } else {
-        res.write(fs.readFileSync("index.html"));
+        let filename = path.join(__dirname, "public", req.url);
+        if (!fs.existsSync(filename) || !fs.statSync(filename).isFile()) {
+            filename = "public/index.html";
+        }
+        res.write(fs.readFileSync(filename));
     }
     res.end();
 });
