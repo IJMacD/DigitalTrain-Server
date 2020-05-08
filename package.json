@@ -1,0 +1,11 @@
+{
+  "name": "DigitalTrain-Server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "repository": "git@github.com:IJMacD/DigitalTrain-Server.git",
+  "author": "Iain MacDonald <IJMacD@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "sqlite3": "^4.2.0"
+  }
+}
