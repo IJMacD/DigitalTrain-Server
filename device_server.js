@@ -67,7 +67,7 @@ class DeviceServer {
 
                 for (let i = 0; i + 1 < parts.length; i += 2) {
                     const field = parts[i];
-                    /** @type {string|boolean} */
+                    /** @type {string|number|boolean} */
                     let value = parts[i + 1];
 
                     if (DEBUG >= 2) {
@@ -77,8 +77,13 @@ class DeviceServer {
                     if (value === "on") value = true;
                     if (value === "off") value = false;
 
+                    if (!isNaN(+value)) {
+                        value = +value;
+                    }
+
                     if (field === "id") {
                         logClient(client, `identified as ${value}`);
+                        client.id = value;
                         controller.activateDevice(value);
                     }
                     else 
@@ -102,6 +107,7 @@ class DeviceServer {
         });
 
         controller.addListener((device_id, prop, value) => {
+            console.log(`Change Notification: ${device_id}:${prop} = ${value}`);
             const client = findClientById(device_id);
             if (client) {
                 if (prop === "stop") stopDevice(client);
@@ -132,7 +138,7 @@ class DeviceServer {
             for (const client of pool.values()) {
                 client.socket.write(`?\n`);
                 if (DEBUG >= 2) {
-                    process.stdout.write(`\u001b[2K\u001b[1G${new Date().toISOString()} ${client.id} ping\n`);
+                    logClient(client, "ping");
                 }
             }
             if (DEBUG >= 1 && process.stdout.isTTY) {

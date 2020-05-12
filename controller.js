@@ -7,7 +7,7 @@ class Controller {
         /** @type {Function[]} */
         this.listeners = [];
 
-        this.unidentifiedDevices = [];
+        this.devices = [];
 
         db.parallelize(() => {
             db.all("SELECT * FROM blocks", (err, rows) => {
@@ -94,9 +94,12 @@ class Controller {
             loco.active = true;
             loco.block = this.blocks[0].id;
             this.blocks[0].occupied = loco.id;
-        } else {
-            this.unidentifiedDevices.push({ id, start: new Date });
-        }
+        } 
+        
+        // Remove previous pretenders to the throne
+        this.devices = this.devices.filter(d => d.id !== id);
+        // Add new one
+        this.devices.push({ id, start: new Date });
     }
 
     deactivateDevice (id) {
@@ -107,9 +110,9 @@ class Controller {
                 const block = this.blocks.find(b => b.id === loco.block);
                 block.occupied = null;
             }
-        } else {
-            this.unidentifiedDevices = this.unidentifiedDevices.filter(d => d.id !== id);
         }
+
+        // this.devices = this.devices.filter(d => d.id !== id);
     }
 
     allStop () {
@@ -133,12 +136,23 @@ class Controller {
             loco[prop] = value;
             this.emit(device_id, prop, value);
         }
+        
+        const device = this.devices.find(d => d.id === device_id);
+        if (device) {
+            device[prop] = value;
+            this.emit(device_id, prop, value);
+        }
     }
 
     reportDevice (device_id, prop, value) {
         const loco = this.locomotives.find(l => l.device_id === device_id);
         if (loco) {
             loco[prop] = value;
+        }
+        
+        const device = this.devices.find(d => d.id === device_id);
+        if (device) {
+            device[prop] = value;
         }
     }
 }

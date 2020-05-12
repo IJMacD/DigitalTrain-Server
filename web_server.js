@@ -22,7 +22,8 @@ class WebServer {
                     if (id) {
                         for (const prop in props) {
                             const p = props[prop];
-                            /** @type {string|boolean} */
+
+                            /** @type {string|number|boolean} */
                             let value = Array.isArray(p) ? p[0] : p;
                             if (value === "on") {
                                 value = true;
@@ -31,6 +32,9 @@ class WebServer {
                                 value = false;
                             }
 
+                            if (!isNaN(+value)) {
+                                value = +value;
+                            }
                         
                             if (prop === "stop") {
                                 if (id === "all") controller.allStop();
@@ -46,7 +50,7 @@ class WebServer {
             } else if (req.url === "/status") {
                 res.setHeader("Content-Type", "application/json");
 
-                const { blocks, links, points, locomotives, unidentifiedDevices: devices } = controller;
+                const { blocks, links, points, locomotives, devices } = controller;
 
                 res.write(JSON.stringify({
                     devices,
